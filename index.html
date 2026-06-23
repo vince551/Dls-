@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <link rel="manifest" href="manifest.json">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DLS Tournament Hub</title>
     <style>
@@ -500,7 +499,8 @@
                 matches.push({ p1: seededPlayers[i].name, p2: seededPlayers[i + 1].name });
                 bracketHTML += `<div style="margin: 10px 0; padding: 5px; border-left: 3px solid var(--dls-accent);">
                     <strong>Match ${matches.length}:</strong> ${seededPlayers[i].name} <span style="color:#888;">vs</span> ${seededPlayers[i + 1].name}
-    
+                </div>`;
+            } else {
                 bracketHTML += `<div style="margin: 10px 0; padding: 5px; border-left: 3px solid #ffcc00;">
                     <strong>Match ${matches.length + 1}:</strong> ${seededPlayers[i].name} <span style="color:#ffcc00;">(ADVANCES BYE)</span>
                 </div>`;
@@ -546,11 +546,6 @@
     if (savedBracket) {
         document.getElementById('bracketDisplay').innerHTML = savedBracket;
     }
-    if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js')
-    .then(() => console.log("DLS App Registered Successfully!"))
-    .catch(err => console.log("Registration failed: ", err));
-    }
 </script>
 </body>
-  </html>
+</html>
