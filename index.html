@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DLS Tournament Hub</title>
+    <style>
+        :root {
+            --dls-bg: #090d14;          /* Ultra deep stadium dark navy */
+            --dls-card: rgba(22, 27, 34, 0.85); /* Slick semi-translucent slate */
+            --dls-accent: #00ff66;      /* Vibrant DLS Neon Green */
+            --dls-accent-glow: rgba(0, 255, 102, 0.3);
+            --dls-text-main: #ffffff;
+            --dls-text-sub: #8b949e;
+            --dls-border: #21262d;
+        }
+        
+        body {
+            font-family: 'Arial Black', 'Impact', sans-serif;
+            background: linear-gradient(rgba(9, 13, 20, 0.88), rgba(9, 13, 20, 0.88)), 
+                        url('images/background.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: var(--dls-text-main);
+            margin: 0;
+            padding: 15px;
+            letter-spacing: 0.5px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Dedicated Brand Header Styling */
+        .brand-header {
+            text-align: center; 
+            margin-bottom: 25px; 
+            padding-top: 10px;
+        }
+
+        .brand-logo {
+            width: 85%; 
+            border-radius:150px ;
+            max-width: 320px; 
+            height: auto;
+            display: inline-block;
+            filter: drop-shadow(0px 0px 12px var(--dls-accent-glow));
+        }
+
+        .brand-subtitle {
+            font-family: 'Arial Black', sans-serif; 
+            font-style: italic; 
+            font-size: 14px; 
+            text-transform: uppercase; 
+            color: #ffffff; 
+            letter-spacing: 2px; 
+            margin-top: 8px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        h2 {
+            font-size: 16px;
+            text-transform: uppercase;
+            font-style: italic;
+            margin-top: 0;
+            color: #ffffff;
+            border-left: 4px solid var(--dls-accent);
+            padding-left: 10px;
+            letter-spacing: 1px;
+        }
+
+        /* Glassmorphism Tactical Cards */
+        .card {
+            background: var(--dls-card);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            padding: 20px;
+            margin-bottom: 25px;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            clip-path: polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.6);
+        }
+
+        /* Futuristic Slanted Navigation Tabs */
+        .tab-container {
+            display: flex;
+            margin-bottom: 25px;
+            gap: 8px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 14px;
+            background: #1f242c;
+            color: var(--dls-text-sub);
+            border: 1px solid rgba(255,255,255,0.05);
+            font-weight: bold;
+            text-transform: uppercase;
+            font-style: italic;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            clip-path: polygon(0 0, 88% 0, 100% 100%, 0% 100%);
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, var(--dls-accent) 0%, #00cc52 100%);
+            color: #000000;
+            box-shadow: 0 0 15px var(--dls-accent-glow);
+            border: none;
+        }
+
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+
+        .login-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .login-card {
+            background: #161b22;
+            padding: 25px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 360px;
+            border: 1px solid #30363d;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 14px;
+            margin: 10px 0;
+            background: #090d14;
+            color: #ffffff;
+            border: 1px solid #2d333b;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-family: sans-serif;
+            font-weight: bold;
+            font-size: 14px;
+            transition: border 0.2s;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--dls-accent);
+            box-shadow: 0 0 8px var(--dls-accent-glow);
+            outline: none;
+        }
+
+        button {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, var(--dls-accent) 0%, #00b347 100%);
+            color: #000000;
+            font-family: 'Arial Black', sans-serif;
+            text-transform: uppercase;
+            font-style: italic;
+            font-size: 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.1s ease;
+            box-shadow: 0 5px 0px #00732e, 0 10px 20px rgba(0,255,102,0.2);
+        }
+
+        button:active {
+            transform: translateY(3px);
+            box-shadow: 0 2px 0px #00732e, 0 4px 10px rgba(0,255,102,0.2);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+
+        th {
+            font-family: 'Arial Black', sans-serif;
+            text-transform: uppercase;
+            font-size: 11px;
+            color: #5865f2;
+            padding: 12px 8px;
+            border-bottom: 2px solid #2d333b;
+            letter-spacing: 1px;
+        }
+
+        td {
+            padding: 14px 8px;
+            border-bottom: 1px solid #1c2128;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+            color: var(--dls-accent);
+        }
+
+        .chat-box {
+            height: 200px;
+            overflow-y: auto;
+            background: #06090f;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #2d333b;
+            font-family: system-ui, sans-serif;
+            font-size: 13px;
+        }
+
+        .chat-box::-webkit-scrollbar {
+            width: 6px;
+        }
+        .chat-box::-webkit-scrollbar-thumb {
+            background: #2d333b;
+            border-radius: 10px;
+        }
+        .chat-box::-webkit-scrollbar-thumb:hover {
+            background: var(--dls-accent);
+        }
+
+        .chat-box div {
+            margin-bottom: 10px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid #141920;
+            color: #e1e7ed;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    
+    <div class="brand-header">
+        <img src="images/logo.png" alt="Dream League Soccer" class="brand-logo"> 
+        <div class="brand-subtitle">TOURNAMENT HUB</div>
+    </div>
+
+    <div class="tab-container">
+        <button class="tab-btn active" onclick="switchTab('userTab', this)">User Dashboard</button>
+        <button class="tab-btn" onclick="switchTab('adminTab', this)">Admin Panel</button>
+    </div>
+
+    <div id="userTab" class="tab-content active">
+        <div class="card">
+            <h2>League Table</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Team</th>
+                        <th>P</th>
+                        <th>W</th>
+                        <th>D</th>
+                        <th>L</th>
+                        <th>GD</th>
+                        <th>Pts</th>
+                    </tr>
+                </thead>
+                <tbody id="leaderboardBody"></tbody>
+            </table>
+        </div>
+
+        <div class="card">
+            <h2>Tournament Bracket</h2>
+            <div id="bracketDisplay" style="background: #111; padding: 15px; border-radius: 4px; font-family: monospace; line-height: 1.6;">
+                No tournament active.
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Match Matchmaking Chat</h2>
+            <div class="chat-box" id="chatBox"></div>
+            <input type="text" id="chatMessage" placeholder="Type room code or message...">
+            <button onclick="sendMessage()">Send Message</button>
+        </div>
+    </div>
+
+    <div id="adminTab" class="tab-content">
+        <div class="card" style="border-left: 4px solid var(--accent-color);">
+            <h2>Player Registration</h2>
+            <input type="text" id="regName" placeholder="Enter Team / Manager Name">
+            <button onclick="registerPlayer()">Register Player</button>
+        </div>
+
+        <div class="card" style="border-left: 4px solid var(--accent-color);">
+            <h2>Report Match Score</h2>
+            <label for="player1Select">Team 1:</label>
+            <select id="player1Select" style="width:100%; padding:10px; margin:5px 0; background:#333; color:#fff; border-radius:4px; border:none;"></select>
+            <input type="number" id="score1" placeholder="Team 1 Score" min="0">
+            
+            <label for="player2Select" style="margin-top:10px; display:block;">Team 2:</label>
+            <select id="player2Select" style="width:100%; padding:10px; margin:5px 0; background:#333; color:#fff; border-radius:4px; border:none;"></select>
+            <input type="number" id="score2" placeholder="Team 2 Score" min="0">
+            
+            <button onclick="submitMatchScore()" style="margin-top:10px;">Submit Result</button>
+        </div>
+
+        <div class="card" style="border-left: 4px solid #ffcc00;">
+            <h2>Tournament Control</h2>
+            <button onclick="generateBracket()" style="background: #ffcc00; color: #000;">Generate Knockout Bracket</button>
+        </div>
+
+        <div class="card" style="border: 1px dashed #ff3333; margin-top: 40px;">
+            <h2 style="color: #ff3333;">System Reset</h2>
+            <p style="color: #aaa; font-size: 14px; text-align: center;">Warning: Completely deletes all tournament records.</p>
+            <button onclick="clearAllData()" style="background: #ff3333; color: #fff;">Wipe All Data & Reset</button>
+        </div>
+    </div>
+</div>
+
+<div id="adminLoginModal" class="login-overlay">
+    <div class="login-card">
+        <h2 style="margin-top:0; color:var(--dls-accent);">Admin Gateway</h2>
+        <p style="font-size:14px; color:#aaa;">Authentication required to enter administration controls.</p>
+        
+        <input type="email" id="adminEmail" placeholder="Email Address">
+        <input type="password" id="adminPass" placeholder="Password">
+        
+        <button onclick="verifyAdmin()" style="margin-top:10px;">Login</button>
+        <button onclick="cancelAdminLogin()" style="background:#333; color:#fff; margin-top:5px;">Cancel</button>
+    </div>
+</div>
+
+<script>
+    let isAdminAuthenticated = false; 
+
+    function switchTab(tabId, element) {
+        if (tabId === 'adminTab' && !isAdminAuthenticated) {
+            document.getElementById('adminLoginModal').style.display = 'flex';
+            return;
+        }
+
+        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        
+        document.getElementById(tabId).classList.add('active');
+        element.classList.add('active');
+    }
+
+    function verifyAdmin() {
+        const emailInput = document.getElementById('adminEmail').value.trim();
+        const passInput = document.getElementById('adminPass').value;
+
+        if (emailInput === "architectvince7@gmail.com" && passInput === "architectvince@123#$") {
+            isAdminAuthenticated = true;
+            document.getElementById('adminLoginModal').style.display = 'none';
+            
+            const adminBtn = document.querySelectorAll('.tab-btn')[1];
+            switchTab('adminTab', adminBtn);
+            
+            document.getElementById('adminEmail').value = '';
+            document.getElementById('adminPass').value = '';
+        } else {
+            alert("Access Denied: Invalid Admin Credentials.");
+        }
+    }
+
+    function cancelAdminLogin() {
+        document.getElementById('adminLoginModal').style.display = 'none';
+        document.getElementById('adminEmail').value = '';
+        document.getElementById('adminPass').value = '';
+    }
+    
+    let players = JSON.parse(localStorage.getItem('dls_players')) || [];
+    let messages = JSON.parse(localStorage.getItem('dls_messages')) || [];
+
+    function updateTable() {
+        const tbody = document.getElementById('leaderboardBody');
+        tbody.innerHTML = '';
+        
+        players.sort((a, b) => {
+            if (b.pts !== a.pts) {
+                return b.pts - a.pts;
+            }
+            return (b.gf - b.ga) - (a.gf - a.ga);
+        });
+
+        players.forEach(player => {
+            let gd = (player.gf || 0) - (player.ga || 0);
+            let gdText = gd > 0 ? `+${gd}` : gd;
+
+            let row = `<tr>
+                <td><b>${player.name}</b></td>
+                <td>${player.p}</td>
+                <td>${player.w}</td>
+                <td>${player.d}</td>
+                <td>${player.l}</td>
+                <td>${gdText}</td>
+                <td><b>${player.pts}</b></td>
+            </tr>`;
+            tbody.innerHTML += row;
+        });
+
+        updateDropdowns();
+    }
+
+    function updateDropdowns() {
+        const select1 = document.getElementById('player1Select');
+        const select2 = document.getElementById('player2Select');
+        
+        select1.innerHTML = '';
+        select2.innerHTML = '';
+
+        players.forEach((player, index) => {
+            let opt1 = document.createElement('option');
+            opt1.value = index;
+            opt1.textContent = player.name;
+            select1.appendChild(opt1);
+
+            let opt2 = document.createElement('option');
+            opt2.value = index;
+            opt2.textContent = player.name;
+            select2.appendChild(opt2);
+        });
+    }
+
+    function registerPlayer() {
+        const nameInput = document.getElementById('regName');
+        const name = nameInput.value.trim();
+        
+        if (name === '') return alert('Please enter a team name');
+        
+        if (players.some(p => p.name.toLowerCase() === name.toLowerCase())) {
+            return alert('Team name already taken');
+        }
+
+        players.push({ name: name, p: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 });
+        localStorage.setItem('dls_players', JSON.stringify(players));
+        
+        nameInput.value = '';
+        updateTable();
+    }
+
+    function submitMatchScore() {
+        const p1Index = document.getElementById('player1Select').value;
+        const p2Index = document.getElementById('player2Select').value;
+        const s1 = parseInt(document.getElementById('score1').value);
+        const s2 = parseInt(document.getElementById('score2').value);
+
+        if (p1Index === p2Index) return alert("A team cannot play against itself!");
+        if (isNaN(s1) || isNaN(s2)) return alert("Please enter valid scores for both teams.");
+
+        let player1 = players[p1Index];
+        let player2 = players[p2Index];
+
+        player1.p += 1;
+        player2.p += 1;
+        
+        player1.gf += s1;
+        player1.ga += s2;
+        player2.gf += s2;
+        player2.ga += s1;
+
+        if (s1 > s2) {
+            player1.w += 1;
+            player1.pts += 3;
+            player2.l += 1;
+        } else if (s2 > s1) {
+            player2.w += 1;
+            player2.pts += 3;
+            player1.l += 1;
+        } else {
+            player1.d += 1;
+            player1.pts += 1;
+            player2.d += 1;
+            player2.pts += 1;
+        }
+
+        localStorage.setItem('dls_players', JSON.stringify(players));
+        
+        document.getElementById('score1').value = '';
+        document.getElementById('score2').value = '';
+        updateTable();
+    }
+
+    function generateBracket() {
+        if (players.length < 2) {
+            return alert("You need at least 2 players registered to start a tournament!");
+        }
+
+        let seededPlayers = [...players].sort(() => 0.5 - Math.random());
+        let bracketHTML = "<h3>🏆 Round 1 Matchups 🏆</h3><hr style='border-color:#333;'>";
+        let matches = [];
+
+        for (let i = 0; i < seededPlayers.length; i += 2) {
+            if (seededPlayers[i + 1]) {
+                matches.push({ p1: seededPlayers[i].name, p2: seededPlayers[i + 1].name });
+                bracketHTML += `<div style="margin: 10px 0; padding: 5px; border-left: 3px solid var(--dls-accent);">
+                    <strong>Match ${matches.length}:</strong> ${seededPlayers[i].name} <span style="color:#888;">vs</span> ${seededPlayers[i + 1].name}
+    
+                bracketHTML += `<div style="margin: 10px 0; padding: 5px; border-left: 3px solid #ffcc00;">
+                    <strong>Match ${matches.length + 1}:</strong> ${seededPlayers[i].name} <span style="color:#ffcc00;">(ADVANCES BYE)</span>
+                </div>`;
+            }
+        }
+
+        localStorage.setItem('dls_current_bracket', bracketHTML);
+        document.getElementById('bracketDisplay').innerHTML = bracketHTML;
+    }
+
+    function updateChat() {
+        const chatBox = document.getElementById('chatBox');
+        chatBox.innerHTML = '';
+        messages.forEach(msg => {
+            chatBox.innerHTML += `<div><strong>User:</strong> ${msg}</div>`;
+        });
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function sendMessage() {
+        const msgInput = document.getElementById('chatMessage');
+        const msg = msgInput.value.trim();
+        if (msg === '') return;
+
+        messages.push(msg);
+        localStorage.setItem('dls_messages', JSON.stringify(messages));
+        msgInput.value = '';
+        updateChat();
+    }
+
+    function clearAllData() {
+        if (confirm("Are you absolutely sure you want to reset everything? This cannot be undone!")) {
+            localStorage.removeItem('dls_players');
+            localStorage.removeItem('dls_messages');
+            localStorage.removeItem('dls_current_bracket');
+            window.location.reload();
+        }
+    }
+
+    updateTable();
+    updateChat();
+    const savedBracket = localStorage.getItem('dls_current_bracket');
+    if (savedBracket) {
+        document.getElementById('bracketDisplay').innerHTML = savedBracket;
+    }
+</script>
+</body>
+  </html>
