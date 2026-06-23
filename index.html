@@ -333,219 +333,225 @@
     </div>
 </div>
 
-<script>
-    let isAdminAuthenticated = false; 
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { getFirestore, doc, setDoc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    function switchTab(tabId, element) {
-        if (tabId === 'adminTab' && !isAdminAuthenticated) {
-            document.getElementById('adminLoginModal').style.display = 'flex';
-            return;
-        }
+  // 1. Your personal Firebase configuration keys
+  const firebaseConfig = {
+    apiKey: "AIzaSyBRggz6tmtfWrrvjKvO4N1oO_tF1eAomcY",
+    authDomain: "dls-tournament-hub.firebaseapp.com",
+    projectId: "dls-tournament-hub",
+    storageBucket: "dls-tournament-hub.firebasestorage.app",
+    messagingSenderId: "450236473536",
+    appId: "1:450236473536:web:52625338d54479a1bfcd25",
+    measurementId: "G-6VEP28KG8E"
+  };
 
-        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-        
-        document.getElementById(tabId).classList.add('active');
-        element.classList.add('active');
-    }
+  // Initialize Firebase & Firestore database connection
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
 
-    function verifyAdmin() {
-        const emailInput = document.getElementById('adminEmail').value.trim();
-        const passInput = document.getElementById('adminPass').value;
+  // Reference a central path in your cloud database to track everything
+  const tournamentDocRef = doc(db, "tournaments", "main_hub");
 
-        if (emailInput === "architectvince7@gmail.com" && passInput === "architectvince@123#$") {
-            isAdminAuthenticated = true;
-            document.getElementById('adminLoginModal').style.display = 'none';
-            
-            const adminBtn = document.querySelectorAll('.tab-btn')[1];
-            switchTab('adminTab', adminBtn);
-            
-            document.getElementById('adminEmail').value = '';
-            document.getElementById('adminPass').value = '';
-        } else {
-            alert("Access Denied: Invalid Admin Credentials.");
-        }
-    }
+  // Keep tracking variables available globally
+  window.isAdminAuthenticated = false;
+  let players = [];
+  let messages = [];
 
-    function cancelAdminLogin() {
-        document.getElementById('adminLoginModal').style.display = 'none';
-        document.getElementById('adminEmail').value = '';
-        document.getElementById('adminPass').value = '';
-    }
-    
-    let players = JSON.parse(localStorage.getItem('dls_players')) || [];
-    let messages = JSON.parse(localStorage.getItem('dls_messages')) || [];
+  // 2. REAL-TIME DATA SYNC LINK: Automatically triggers when anyone makes changes
+  onSnapshot(tournamentDocRef, (docSnap) => {
+      if (docSnap.exists()) {
+          const data = docSnap.data();
+          players = data.players || [];
+          messages = data.messages || [];
+          
+          // Instantly refresh user interfaces 
+          updateTable();
+          updateChat();
+          
+          if (data.bracketHTML) {
+              document.getElementById('bracketDisplay').innerHTML = data.bracketHTML;
+          } else {
+              document.getElementById('bracketDisplay').innerHTML = "No tournament active.";
+          }
+      } else {
+          // Setup a blank starting base in the cloud database if it doesn't exist yet
+          setDoc(tournamentDocRef, { players: [], messages: [], bracketHTML: "" });
+      }
+  });
 
-    function updateTable() {
-        const tbody = document.getElementById('leaderboardBody');
-        tbody.innerHTML = '';
-        
-        players.sort((a, b) => {
-            if (b.pts !== a.pts) {
-                return b.pts - a.pts;
-            }
-            return (b.gf - b.ga) - (a.gf - a.ga);
-        });
+  // Cloud Sync safe utility
+  async function syncToDatabase(updatedData) {
+      await updateDoc(tournamentDocRef, updatedData);
+  }
 
-        players.forEach(player => {
-            let gd = (player.gf || 0) - (player.ga || 0);
-            let gdText = gd > 0 ? `+${gd}` : gd;
+  // 3. YOUR ORIGINAL PANEL INTERFACES MAPPED DIRECTLY TO THE CLOUD
+  window.switchTab = function(tabId, element) {
+      if (tabId === 'adminTab' && !window.isAdminAuthenticated) {
+          document.getElementById('adminLoginModal').style.display = 'flex';
+          return;
+      }
+      document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      element.classList.add('active');
+  }
 
-            let row = `<tr>
-                <td><b>${player.name}</b></td>
-                <td>${player.p}</td>
-                <td>${player.w}</td>
-                <td>${player.d}</td>
-                <td>${player.l}</td>
-                <td>${gdText}</td>
-                <td><b>${player.pts}</b></td>
-            </tr>`;
-            tbody.innerHTML += row;
-        });
+  window.verifyAdmin = function() {
+      const emailInput = document.getElementById('adminEmail').value.trim();
+      const passInput = document.getElementById('adminPass').value;
 
-        updateDropdowns();
-    }
+      if (emailInput === "architectvince7@gmail.com" && passInput === "architectvince@123#$") {
+          window.isAdminAuthenticated = true;
+          document.getElementById('adminLoginModal').style.display = 'none';
+          const adminBtn = document.querySelectorAll('.tab-btn')[1];
+          window.switchTab('adminTab', adminBtn);
+          document.getElementById('adminEmail').value = '';
+          document.getElementById('adminPass').value = '';
+      } else {
+          alert("Access Denied: Invalid Admin Credentials.");
+      }
+  }
 
-    function updateDropdowns() {
-        const select1 = document.getElementById('player1Select');
-        const select2 = document.getElementById('player2Select');
-        
-        select1.innerHTML = '';
-        select2.innerHTML = '';
+  window.cancelAdminLogin = function() {
+      document.getElementById('adminLoginModal').style.display = 'none';
+      document.getElementById('adminEmail').value = '';
+      document.getElementById('adminPass').value = '';
+  }
 
-        players.forEach((player, index) => {
-            let opt1 = document.createElement('option');
-            opt1.value = index;
-            opt1.textContent = player.name;
-            select1.appendChild(opt1);
+  function updateTable() {
+      const tbody = document.getElementById('leaderboardBody');
+      tbody.innerHTML = '';
+      
+      let sortedPlayers = [...players].sort((a, b) => {
+          if (b.pts !== a.pts) return b.pts - a.pts;
+          return (b.gf - b.ga) - (a.gf - a.ga);
+      });
 
-            let opt2 = document.createElement('option');
-            opt2.value = index;
-            opt2.textContent = player.name;
-            select2.appendChild(opt2);
-        });
-    }
+      sortedPlayers.forEach(player => {
+          let gd = (player.gf || 0) - (player.ga || 0);
+          let gdText = gd > 0 ? `+${gd}` : gd;
+          let row = `<tr>
+              <td><b>${player.name}</b></td>
+              <td>${player.p}</td>
+              <td>${player.w}</td>
+              <td>${player.d}</td>
+              <td>${player.l}</td>
+              <td>${gdText}</td>
+              <td><b>${player.pts}</b></td>
+          </tr>`;
+          tbody.innerHTML += row;
+      });
+      updateDropdowns();
+  }
 
-    function registerPlayer() {
-        const nameInput = document.getElementById('regName');
-        const name = nameInput.value.trim();
-        
-        if (name === '') return alert('Please enter a team name');
-        
-        if (players.some(p => p.name.toLowerCase() === name.toLowerCase())) {
-            return alert('Team name already taken');
-        }
+  function updateDropdowns() {
+      const select1 = document.getElementById('player1Select');
+      const select2 = document.getElementById('player2Select');
+      select1.innerHTML = '';
+      select2.innerHTML = '';
 
-        players.push({ name: name, p: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 });
-        localStorage.setItem('dls_players', JSON.stringify(players));
-        
-        nameInput.value = '';
-        updateTable();
-    }
+      players.forEach((player, index) => {
+          let opt1 = document.createElement('option');
+          opt1.value = index; opt1.textContent = player.name;
+          select1.appendChild(opt1);
 
-    function submitMatchScore() {
-        const p1Index = document.getElementById('player1Select').value;
-        const p2Index = document.getElementById('player2Select').value;
-        const s1 = parseInt(document.getElementById('score1').value);
-        const s2 = parseInt(document.getElementById('score2').value);
+          let opt2 = document.createElement('option');
+          opt2.value = index; opt2.textContent = player.name;
+          select2.appendChild(opt2);
+      });
+  }
 
-        if (p1Index === p2Index) return alert("A team cannot play against itself!");
-        if (isNaN(s1) || isNaN(s2)) return alert("Please enter valid scores for both teams.");
+  window.registerPlayer = async function() {
+      const nameInput = document.getElementById('regName');
+      const name = nameInput.value.trim();
+      if (name === '') return alert('Please enter a team name');
+      if (players.some(p => p.name.toLowerCase() === name.toLowerCase())) {
+          return alert('Team name already taken');
+      }
 
-        let player1 = players[p1Index];
-        let player2 = players[p2Index];
+      players.push({ name: name, p: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 });
+      await syncToDatabase({ players: players });
+      nameInput.value = '';
+  }
 
-        player1.p += 1;
-        player2.p += 1;
-        
-        player1.gf += s1;
-        player1.ga += s2;
-        player2.gf += s2;
-        player2.ga += s1;
+  window.submitMatchScore = async function() {
+      const p1Index = document.getElementById('player1Select').value;
+      const p2Index = document.getElementById('player2Select').value;
+      const s1 = parseInt(document.getElementById('score1').value);
+      const s2 = parseInt(document.getElementById('score2').value);
 
-        if (s1 > s2) {
-            player1.w += 1;
-            player1.pts += 3;
-            player2.l += 1;
-        } else if (s2 > s1) {
-            player2.w += 1;
-            player2.pts += 3;
-            player1.l += 1;
-        } else {
-            player1.d += 1;
-            player1.pts += 1;
-            player2.d += 1;
-            player2.pts += 1;
-        }
+      if (p1Index === p2Index) return alert("A team cannot play against itself!");
+      if (isNaN(s1) || isNaN(s2)) return alert("Please enter valid scores.");
 
-        localStorage.setItem('dls_players', JSON.stringify(players));
-        
-        document.getElementById('score1').value = '';
-        document.getElementById('score2').value = '';
-        updateTable();
-    }
+      let player1 = players[p1Index];
+      let player2 = players[p2Index];
 
-    function generateBracket() {
-        if (players.length < 2) {
-            return alert("You need at least 2 players registered to start a tournament!");
-        }
+      player1.p += 1; player2.p += 1;
+      player1.gf += s1; player1.ga += s2;
+      player2.gf += s2; player2.ga += s1;
 
-        let seededPlayers = [...players].sort(() => 0.5 - Math.random());
-        let bracketHTML = "<h3>🏆 Round 1 Matchups 🏆</h3><hr style='border-color:#333;'>";
-        let matches = [];
+      if (s1 > s2) {
+          player1.w += 1; player1.pts += 3; player2.l += 1;
+      } else if (s2 > s1) {
+          player2.w += 1; player2.pts += 3; player1.l += 1;
+      } else {
+          player1.d += 1; player1.pts += 1; player2.d += 1; player2.pts += 1;
+      }
 
-        for (let i = 0; i < seededPlayers.length; i += 2) {
-            if (seededPlayers[i + 1]) {
-                matches.push({ p1: seededPlayers[i].name, p2: seededPlayers[i + 1].name });
-                bracketHTML += `<div style="margin: 10px 0; padding: 5px; border-left: 3px solid var(--dls-accent);">
-                    <strong>Match ${matches.length}:</strong> ${seededPlayers[i].name} <span style="color:#888;">vs</span> ${seededPlayers[i + 1].name}
-                </div>`;
-            } else {
-                bracketHTML += `<div style="margin: 10px 0; padding: 5px; border-left: 3px solid #ffcc00;">
-                    <strong>Match ${matches.length + 1}:</strong> ${seededPlayers[i].name} <span style="color:#ffcc00;">(ADVANCES BYE)</span>
-                </div>`;
-            }
-        }
+      await syncToDatabase({ players: players });
+      document.getElementById('score1').value = '';
+      document.getElementById('score2').value = '';
+  }
 
-        localStorage.setItem('dls_current_bracket', bracketHTML);
-        document.getElementById('bracketDisplay').innerHTML = bracketHTML;
-    }
+  window.generateBracket = async function() {
+      if (players.length < 2) return alert("You need at least 2 players!");
 
-    function updateChat() {
-        const chatBox = document.getElementById('chatBox');
-        chatBox.innerHTML = '';
-        messages.forEach(msg => {
-            chatBox.innerHTML += `<div><strong>User:</strong> ${msg}</div>`;
-        });
-        chatBox.scrollTop = chatBox.scrollHeight;
-    }
+      let seededPlayers = [...players].sort(() => 0.5 - Math.random());
+      let bracketHTML = "<h3>🏆 Round 1 Matchups 🏆</h3><hr style='border-color:#333;'>";
+      let matchCount = 1;
 
-    function sendMessage() {
-        const msgInput = document.getElementById('chatMessage');
-        const msg = msgInput.value.trim();
-        if (msg === '') return;
+      for (let i = 0; i < seededPlayers.length; i += 2) {
+          if (seededPlayers[i + 1]) {
+              bracketHTML += `<div style="margin: 10px 0; padding: 5px; border-left: 3px solid var(--dls-accent);">
+                  <strong>Match ${matchCount}:</strong> ${seededPlayers[i].name} <span style="color:#888;">vs</span> ${seededPlayers[i + 1].name}
+              </div>`;
+              matchCount++;
+          } else {
+              bracketHTML += `<div style="margin: 10px 0; padding: 5px; border-left: 3px solid #ffcc00;">
+                  <strong>Match ${matchCount}:</strong> ${seededPlayers[i].name} <span style="color:#ffcc00;">(ADVANCES BYE)</span>
+              </div>`;
+          }
+      }
+      await syncToDatabase({ bracketHTML: bracketHTML });
+  }
 
-        messages.push(msg);
-        localStorage.setItem('dls_messages', JSON.stringify(messages));
-        msgInput.value = '';
-        updateChat();
-    }
+  function updateChat() {
+      const chatBox = document.getElementById('chatBox');
+      chatBox.innerHTML = '';
+      messages.forEach(msg => {
+          chatBox.innerHTML += `<div><strong>User:</strong> ${msg}</div>`;
+      });
+      chatBox.scrollTop = chatBox.scrollHeight;
+  }
 
-    function clearAllData() {
-        if (confirm("Are you absolutely sure you want to reset everything? This cannot be undone!")) {
-            localStorage.removeItem('dls_players');
-            localStorage.removeItem('dls_messages');
-            localStorage.removeItem('dls_current_bracket');
-            window.location.reload();
-        }
-    }
+  window.sendMessage = async function() {
+      const msgInput = document.getElementById('chatMessage');
+      const msg = msgInput.value.trim();
+      if (msg === '') return;
 
-    updateTable();
-    updateChat();
-    const savedBracket = localStorage.getItem('dls_current_bracket');
-    if (savedBracket) {
-        document.getElementById('bracketDisplay').innerHTML = savedBracket;
-    }
+      messages.push(msg);
+      await syncToDatabase({ messages: messages });
+      msgInput.value = '';
+  }
+
+  window.clearAllData = async function() {
+      if (confirm("Are you absolutely sure you want to reset everything?")) {
+          await setDoc(tournamentDocRef, { players: [], messages: [], bracketHTML: "" });
+      }
+  }
 </script>
 </body>
 </html>
