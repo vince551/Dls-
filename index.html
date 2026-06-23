@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <link rel="manifest" href="manifest.json">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DLS Tournament Hub</title>
     <style>
@@ -544,6 +545,11 @@
     const savedBracket = localStorage.getItem('dls_current_bracket');
     if (savedBracket) {
         document.getElementById('bracketDisplay').innerHTML = savedBracket;
+    }
+    if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js')
+    .then(() => console.log("DLS App Registered Successfully!"))
+    .catch(err => console.log("Registration failed: ", err));
     }
 </script>
 </body>
